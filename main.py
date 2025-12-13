@@ -14,7 +14,7 @@ import RPi.GPIO as GPIO
 bluePin = 11
 greenPin = 15
 redPin = 13
-fiveVPin = 17
+fiveVPin = 16
 
 
 
