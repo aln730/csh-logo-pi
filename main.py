@@ -2,9 +2,8 @@ import time
 import argparse
 import RPi.GPIO as GPIO
 
-#gpio
+#gpio   
 
-# RGB pins (BOARD numbering)
 RED = 11
 GREEN = 15
 BLUE = 13
@@ -14,7 +13,7 @@ GPIO.setup(RED, GPIO.OUT)
 GPIO.setup(GREEN, GPIO.OUT)
 GPIO.setup(BLUE, GPIO.OUT)
 
-#basic-logic
+#basic logic
 
 def set_color(r, g, b):
     GPIO.output(RED, GPIO.HIGH if r else GPIO.LOW)
@@ -24,21 +23,25 @@ def set_color(r, g, b):
 def all_off():
     set_color(0, 0, 0)
 
-#patterns
+#pattern
 
-def strobe(color, flashes=12, on=0.08, off=0.08):
-    for _ in range(flashes):
+def strobe_forever(color, on=0.08, off=0.08):
+    while True:
         set_color(*color)
         time.sleep(on)
         all_off()
         time.sleep(off)
 
-def police():
-    for _ in range(6):
-        strobe((1, 0, 0), flashes=3, on=0.06, off=0.04)
-        strobe((0, 0, 1), flashes=3, on=0.06, off=0.04)
+def police_forever():
+    while True:
+        for _ in range(3):
+            set_color(1,0,0); time.sleep(0.06)
+            all_off(); time.sleep(0.04)
+        for _ in range(3):
+            set_color(0,0,1); time.sleep(0.06)
+            all_off(); time.sleep(0.04)
 
-def rainbow():
+def rainbow_forever():
     colors = [
         (1,0,0),
         (1,1,0),
@@ -47,31 +50,32 @@ def rainbow():
         (0,0,1),
         (1,0,1),
     ]
-    for c in colors:
-        strobe(c, flashes=4, on=0.07, off=0.07)
+    while True:
+        for c in colors:
+            set_color(*c)
+            time.sleep(0.15)
+            all_off()
+            time.sleep(0.05)
 
-def chase():
-    colors = [
-        (1,0,0),
-        (0,1,0),
-        (0,0,1),
-        (1,0,1),
-    ]
-    for c in colors:
-        set_color(*c)
-        time.sleep(0.2)
-        all_off()
+def chase_forever():
+    colors = [(1,0,0), (0,1,0), (0,0,1), (1,0,1)]
+    while True:
+        for c in colors:
+            set_color(*c)
+            time.sleep(0.2)
+            all_off()
 
-def alt_magenta_green():
-    for _ in range(12):
+def alt_magenta_green_forever():
+    while True:
         set_color(1,0,1)
         time.sleep(0.15)
         set_color(0,1,0)
         time.sleep(0.15)
-    all_off()
 
-def purple_stay():
-    set_color(1, 0, 1) #CSH-COLOR
+def purple_stay_forever():
+    while True:
+        set_color(1, 0, 1)
+        time.sleep(1)
 
 #Menu
 
@@ -95,20 +99,21 @@ MENU = """
  .........................` `....- 
 RGB Strip Controller
 ---------------------
-RS  Red strobe
-GS Green strobe
-BS  Blue strobe
-MS  Magenta strobe
-PS  Police strobe
-RF  Rainbow flash
-CC  Color chase
-MG  Magenta / Green alternate
-CSH  Purple stay (solid)
+1  Red strobe
+2  Green strobe
+3  Blue strobe
+4  Magenta strobe
+5  Police strobe
+6  Rainbow flash
+7  Color chase
+8  Magenta / Green alternate
+9  Purple stay (solid)
 0  All off
 q  Quit
+
+(Ctrl+C to stop a pattern and return to menu)
 """
 
-# argparse only for -h
 parser = argparse.ArgumentParser(
     description="RGB Strip Controller",
     formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -121,32 +126,37 @@ parser.parse_args()
 try:
     while True:
         print(MENU)
-        choice = input("Select mode: ").strip().lower()
+        choice = input("Select mode: ").strip()
 
-        if choice == "RS":
-            strobe((1,0,0))
-        elif choice == "GS":
-            strobe((0,1,0))
-        elif choice == "BS":
-            strobe((0,0,1))
-        elif choice == "MS":
-            strobe((1,0,1))
-        elif choice == "PS":
-            police()
-        elif choice == "RF":
-            rainbow()
-        elif choice == "CC":
-            chase()
-        elif choice == "MG":
-            alt_magenta_green()
-        elif choice == "CSH":
-            purple_stay()
-        elif choice == "0":
+        try:
+            if choice == "1":
+                strobe_forever((1,0,0))
+            elif choice == "2":
+                strobe_forever((0,1,0))
+            elif choice == "3":
+                strobe_forever((0,0,1))
+            elif choice == "4":
+                strobe_forever((1,0,1))
+            elif choice == "5":
+                police_forever()
+            elif choice == "6":
+                rainbow_forever()
+            elif choice == "7":
+                chase_forever()
+            elif choice == "8":
+                alt_magenta_green_forever()
+            elif choice == "9":
+                purple_stay_forever()
+            elif choice == "0":
+                all_off()
+            elif choice.lower() == "q":
+                break
+            else:
+                print("Invalid option")
+
+        except KeyboardInterrupt:
             all_off()
-        elif choice == "q":
-            break
-        else:
-            print("Invalid option")
+            print("\nPattern stopped. Returning to menu")
 
 finally:
     all_off()
