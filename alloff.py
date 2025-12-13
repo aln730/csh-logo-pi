@@ -1,7 +1,3 @@
-import time
-
-
-
 import RPi.GPIO as GPIO
 
 
@@ -45,29 +41,4 @@ def all_off():
 
 
 
-try:
-    all_off()
-
-    print("Testing RED...")
-    GPIO.output(redPin, GPIO.HIGH)
-    time.sleep(1)
-    all_off()
-
-    print("Testing GREEN...")
-    GPIO.output(greenPin, GPIO.HIGH)
-    time.sleep(1)
-    all_off()
-
-    print("Testing BLUE...")
-    GPIO.output(bluePin, GPIO.HIGH)
-    time.sleep(1)
-    all_off()
-    print("Done.")
-
-
-
-
-
-finally:
-    all_off()
-    GPIO.cleanup()
+all_off()
