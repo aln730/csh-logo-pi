@@ -13,6 +13,15 @@ GPIO.setup(RED, GPIO.OUT)
 GPIO.setup(GREEN, GPIO.OUT)
 GPIO.setup(BLUE, GPIO.OUT)
 
+# PWM (needed for smooth transitions)
+pwm_r = GPIO.PWM(RED, 1000)
+pwm_g = GPIO.PWM(GREEN, 1000)
+pwm_b = GPIO.PWM(BLUE, 1000)
+
+pwm_r.start(0)
+pwm_g.start(0)
+pwm_b.start(0)
+
 #basic logic
 
 def set_color(r, g, b):
@@ -20,8 +29,13 @@ def set_color(r, g, b):
     GPIO.output(GREEN, GPIO.HIGH if g else GPIO.LOW)
     GPIO.output(BLUE, GPIO.HIGH if b else GPIO.LOW)
 
+def set_color_pwm(r, g, b):
+    pwm_r.ChangeDutyCycle(r)
+    pwm_g.ChangeDutyCycle(g)
+    pwm_b.ChangeDutyCycle(b)
+
 def all_off():
-    set_color(0, 0, 0)
+    set_color_pwm(0, 0, 0)
 
 #pattern
 
@@ -77,10 +91,32 @@ def purple_stay_forever():
         set_color(1, 0, 1)
         time.sleep(1)
 
+def green_blue_smooth_forever(step=2, delay=0.02):
+    while True:
+        # green -> cyan
+        for b in range(0, 101, step):
+            set_color_pwm(0, 100, b)
+            time.sleep(delay)
+
+        # cyan -> blue
+        for g in range(100, -1, -step):
+            set_color_pwm(0, g, 100)
+            time.sleep(delay)
+
+        # blue -> cyan
+        for g in range(0, 101, step):
+            set_color_pwm(0, g, 100)
+            time.sleep(delay)
+
+        # cyan -> green
+        for b in range(100, -1, -step):
+            set_color_pwm(0, 100, b)
+            time.sleep(delay)
+
 #Menu
 
 MENU = """
-'{tttttttttttttttttttttttt^ *tttt\ 
+'{tttttttttttttttttttttttt^ *tttt\\ 
 :@@@@@@@@@@@@@@@@@@@@@@@@@m d@@@@N`
 :@@@@@@@@@@@@@@@@@@@@@@@@@m d@@@@N`
 :@@@@@m:::::::::::::rQ@@@@m d@@@@N`
@@ -90,7 +126,7 @@ MENU = """
 :@@@@@] o@@Q]tt{{{z-'Q@@@@QOQ@@@@N`
 :@@@@@] o@@@@@@@@@@"'Q@@@@@@@@@@@N`
 :@@@@@] ';;;;;;y@@@"'Q@@@@N7Q@@@@N`
-:@@@@@] \KKe^^^a@@@"'Q@@@@m d@@@@N`
+:@@@@@] \\KKe^^^a@@@"'Q@@@@m d@@@@N`
 :@@@@@] o@@@@@@@@@@" _::::' d@@@@N`
 :@@@@@] raaaaaaaaay..H####} d@@@@N`
 :@@@@@#eeeeeeeeeeeeek@@@@@m d@@@@N`
@@ -108,6 +144,7 @@ RGB Strip Controller
 7  Color chase
 8  Magenta / Green alternate
 9  Purple stay (solid)
+a  Green / Blue smooth fade
 0  All off
 q  Quit
 
@@ -147,6 +184,8 @@ try:
                 alt_magenta_green_forever()
             elif choice == "9":
                 purple_stay_forever()
+            elif choice.lower() == "a":
+                green_blue_smooth_forever()
             elif choice == "0":
                 all_off()
             elif choice.lower() == "q":
@@ -160,5 +199,8 @@ try:
 
 finally:
     all_off()
+    pwm_r.stop()
+    pwm_g.stop()
+    pwm_b.stop()
     GPIO.cleanup()
     print("Clean exit.")
